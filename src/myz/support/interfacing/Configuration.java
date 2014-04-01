@@ -409,7 +409,7 @@ public class Configuration {
 			Set<Integer> keys = new HashSet<Integer>();
 			for (String str : allKeys)
 				try {
-					keys.add(Integer.parseInt(str.replaceAll("kit", "")));
+					keys.add(Integer.parseInt(str.replace("kit", "")));
 				} catch (Exception exc) {
 				}
 
@@ -428,7 +428,7 @@ public class Configuration {
 		Set<Integer> keys = new HashSet<Integer>();
 		for (String str : allKeys)
 			try {
-				keys.add(Integer.parseInt(str.replaceAll("kit", "")));
+				keys.add(Integer.parseInt(str.replace("kit", "")));
 			} catch (Exception exc) {
 			}
 
@@ -843,7 +843,7 @@ public class Configuration {
 			message = String.format(message, variables);
 		} catch (MissingFormatArgumentException exc) {
 			Messenger.sendConsoleMessage(ChatColor.RED + message + " must have the correct number of variables (%s). Please reformat.");
-			message = message.replaceAll("%s", "");
+			message = message.replace("%s", "");
 		}
 		return message;
 	}

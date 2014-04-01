@@ -30,7 +30,7 @@
         <version>2.3.1</version>
         <configuration>
           <finalName>MyZ-3</finalName>
-          <outputDirectory>D:\Users\Jordan\Minecraft\Server\plugins</outputDirectory>
+          <outputDirectory>..</outputDirectory>
         </configuration>
       </plugin>
       <plugin>
@@ -97,31 +97,31 @@
     <dependency>
       <groupId>org.bukkit</groupId>
       <artifactId>bukkit</artifactId>
-      <version>1.7.2-R0.2</version>
+      <version>1.7.2-R0.4-SNAPSHOT</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.bukkit</groupId>
       <artifactId>craftbukkit</artifactId>
-      <version>1.7.2-R0.2</version>
+      <version>1.7.2-R0.4-SNAPSHOT</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>com.sk89q</groupId>
       <artifactId>worldedit</artifactId>
-      <version>LATEST</version>
+      <version>5.7-SNAPSHOT</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.kitteh</groupId>
       <artifactId>tagapi</artifactId>
-      <version>LATEST</version>
+      <version>3.0.3-SNAPSHOT</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>com.sk89q</groupId>
       <artifactId>worldguard</artifactId>
-      <version>LATEST</version>
+      <version>5.9.1-SNAPSHOT</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -133,13 +133,13 @@
     <dependency>
       <groupId>LibsDisguises</groupId>
       <artifactId>LibsDisguises</artifactId>
-      <version>LATEST</version>
+      <version>8.0.1-SNAPSHOT</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>net.milkbowl.vault</groupId>
       <artifactId>Vault</artifactId>
-      <version>LATEST</version>
+      <version>1.2.31</version>
       <scope>compile</scope>
     </dependency>
   </dependencies>

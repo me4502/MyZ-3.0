@@ -20,13 +20,13 @@ import org.bukkit.event.player.PlayerMoveEvent;
  */
 public class Movement implements Listener {
 
-	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
-	private void onMove(PlayerMoveEvent e) {
-		if (!((List<String>) Configuration.getConfig(Configuration.WORLDS)).contains(e.getPlayer().getWorld().getName()))
-			return;
-		if (Sync.getSafeLogoutPlayers().containsKey(e.getPlayer().getUniqueId()) && e.getFrom().distance(e.getTo()) >= 0.1) {
-			Sync.removeSafeLogoutPlayer(e.getPlayer());
-			Messenger.sendConfigMessage(e.getPlayer(), "safe_logout.cancelled");
-		}
-	}
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    private void onMove(PlayerMoveEvent e) {
+        if (!((List<String>) Configuration.getConfig(Configuration.WORLDS)).contains(e.getPlayer().getWorld().getName()))
+            return;
+        if (Sync.getSafeLogoutPlayers().containsKey(e.getPlayer().getUniqueId()) && e.getFrom().distance(e.getTo()) >= 0.1) {
+            Sync.removeSafeLogoutPlayer(e.getPlayer());
+            Messenger.sendConfigMessage(e.getPlayer(), "safe_logout.cancelled");
+        }
+    }
 }

@@ -27,66 +27,66 @@ import org.bukkit.event.player.PlayerRespawnEvent;
  */
 public class PlayerDeath implements Listener {
 
-	@EventHandler(priority = EventPriority.HIGHEST)
-	private void onDeath(PlayerDeathEvent e) {
-		if (!((List<String>) Configuration.getConfig(Configuration.WORLDS)).contains(e.getEntity().getWorld().getName()))
-			return;
+    @EventHandler(priority = EventPriority.HIGHEST)
+    private void onDeath(PlayerDeathEvent e) {
+        if (!((List<String>) Configuration.getConfig(Configuration.WORLDS)).contains(e.getEntity().getWorld().getName()))
+            return;
 
-		// No deathmessages for pvp.
-		if (e.getEntity().getKiller() != null)
-			e.setDeathMessage(null);
+        // No deathmessages for pvp.
+        if (e.getEntity().getKiller() != null)
+            e.setDeathMessage(null);
 
-		// Get rid of our horse.
-		for (Horse horse : e.getEntity().getWorld().getEntitiesByClass(Horse.class))
-			if (horse.getOwner() != null && horse.getOwner().getName() != null
-					&& horse.getOwner().getName().equals(e.getEntity().getName())) {
-				horse.setOwner(null);
-				horse.setTamed(false);
-				horse.setDomestication(0);
-			}
+        // Get rid of our horse.
+        for (Horse horse : e.getEntity().getWorld().getEntitiesByClass(Horse.class))
+            if (horse.getOwner() != null && horse.getOwner().getName() != null
+            && horse.getOwner().getName().equals(e.getEntity().getName())) {
+                horse.setOwner(null);
+                horse.setTamed(false);
+                horse.setDomestication(0);
+            }
 
-		// Become a zombie and teleport back to spawn to be kicked.
-		Utils.spawnPlayerZombie(e.getEntity(), null);
+        // Become a zombie and teleport back to spawn to be kicked.
+        Utils.spawnPlayerZombie(e.getEntity(), null);
 
-		if (e.getDeathMessage() != null && e.getDeathMessage().contains("Skeleton"))
-			e.setDeathMessage(e.getDeathMessage().replaceAll("Skeleton", "NPC"));
-		e.setDroppedExp(0);
-		e.getDrops().clear();
+        if (e.getDeathMessage() != null && e.getDeathMessage().contains("Skeleton"))
+            e.setDeathMessage(e.getDeathMessage().replace("Skeleton", "NPC"));
+        e.setDroppedExp(0);
+        e.getDrops().clear();
 
-		final Player player = e.getEntity();
-		MyZ.instance.getServer().getScheduler().runTaskLater(MyZ.instance, new Runnable() {
-			@Override
-			public void run() {
-				revive(player);
-			}
-		}, 15L);
-	}
+        final Player player = e.getEntity();
+        MyZ.instance.getServer().getScheduler().runTaskLater(MyZ.instance, new Runnable() {
+            @Override
+            public void run() {
+                revive(player);
+            }
+        }, 15L);
+    }
 
-	@EventHandler(priority = EventPriority.MONITOR)
-	private void onRespawn(final PlayerRespawnEvent e) {
-		if (!((List<String>) Configuration.getConfig(Configuration.WORLDS)).contains(e.getPlayer().getWorld().getName()))
-			return;
+    @EventHandler(priority = EventPriority.MONITOR)
+    private void onRespawn(final PlayerRespawnEvent e) {
+        if (!((List<String>) Configuration.getConfig(Configuration.WORLDS)).contains(e.getPlayer().getWorld().getName()))
+            return;
 
-		MyZ.instance.getServer().getScheduler().runTaskLater(MyZ.instance, new Runnable() {
-			@Override
-			public void run() {
-				if (e.getPlayer().isOnline())
-					MyZ.instance.putPlayerAtSpawn(e.getPlayer(), true, true);
-			}
-		}, 10L);
-	}
+        MyZ.instance.getServer().getScheduler().runTaskLater(MyZ.instance, new Runnable() {
+            @Override
+            public void run() {
+                if (e.getPlayer().isOnline())
+                    MyZ.instance.putPlayerAtSpawn(e.getPlayer(), true, true);
+            }
+        }, 10L);
+    }
 
-	/**
-	 * Bypass the respawn screen and come back to life immediately.
-	 * 
-	 * @param p
-	 *            The player to respawn immediately.
-	 */
-	private void revive(Player p) {
-		if (!p.isDead())
-			return;
-		PacketPlayInClientCommand packet = new PacketPlayInClientCommand(EnumClientCommand.PERFORM_RESPAWN);
-		((CraftPlayer) p).getHandle().playerConnection.a(packet);
-		MyZ.instance.putPlayerAtSpawn(p, true, true);
-	}
+    /**
+     * Bypass the respawn screen and come back to life immediately.
+     * 
+     * @param p
+     *            The player to respawn immediately.
+     */
+    private void revive(Player p) {
+        if (!p.isDead())
+            return;
+        PacketPlayInClientCommand packet = new PacketPlayInClientCommand(EnumClientCommand.PERFORM_RESPAWN);
+        ((CraftPlayer) p).getHandle().playerConnection.a(packet);
+        MyZ.instance.putPlayerAtSpawn(p, true, true);
+    }
 }

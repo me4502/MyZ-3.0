@@ -193,8 +193,8 @@ public class MedKit {
 
 	@Override
 	public String toString() {
-		String out = output.getType().toString().toLowerCase().replaceAll("_", " ");
-		String in = input.getType().toString().toLowerCase().replaceAll("_", " ");
+		String out = output.getType().toString().toLowerCase().replace("_", " ");
+		String in = input.getType().toString().toLowerCase().replace("_", " ");
 		return ChatColor.translateAlternateColorCodes('&', name) + ChatColor.RESET + " requires " + ointment + " ointment, " + antiseptic
 				+ " antiseptic and a" + (startsWithVowel(in) ? "n" : "") + " " + in + " and yields a" + (startsWithVowel(out) ? "n" : "")
 				+ " " + out + ".";

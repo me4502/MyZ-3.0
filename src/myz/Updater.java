@@ -359,7 +359,7 @@ public class Updater implements CommandExecutor, CommandSender {
 	 */
 	private boolean versionCheck(String title) {
 		final String version = plugin.getDescription().getVersion();
-		if (version.equalsIgnoreCase(newVersionName = title.replaceAll("[^\\d.]", "").replaceAll(" ", "")))
+		if (version.equalsIgnoreCase(newVersionName = title.replace("[^\\d.]", "").replace(" ", "")))
 			return false;
 		return !newVersionName.startsWith("2");
 	}

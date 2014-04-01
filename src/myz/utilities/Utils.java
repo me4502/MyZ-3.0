@@ -244,7 +244,7 @@ public class Utils {
 	 */
 	public static String getNameOf(ItemStack item) {
 		if (item.getItemMeta() == null || item.getItemMeta().getDisplayName() == null || item.getItemMeta().getDisplayName().isEmpty())
-			return item.getType().toString().charAt(0) + item.getType().toString().substring(1).toLowerCase().replaceAll("_", " ")
+			return item.getType().toString().charAt(0) + item.getType().toString().substring(1).toLowerCase().replace("_", " ")
 					+ (item.getDurability() != (short) 0 ? ":" + item.getDurability() : "");
 		return item.getItemMeta().getDisplayName() + "&r";
 	}

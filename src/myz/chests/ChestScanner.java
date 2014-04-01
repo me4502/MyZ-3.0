@@ -118,7 +118,7 @@ public class ChestScanner implements Listener {
 			e.setCancelled(true);
 			int percent = 0;
 			try {
-				percent = Integer.parseInt(e.getMessage().replaceAll("%", ""));
+				percent = Integer.parseInt(e.getMessage().replace("%", ""));
 				if (percent > 100)
 					percent = 100;
 			} catch (Exception exc) {

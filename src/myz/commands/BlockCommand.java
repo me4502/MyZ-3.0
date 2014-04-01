@@ -135,11 +135,11 @@ public class BlockCommand implements CommandExecutor, TabCompleter {
 				return;
 
 			}
-			String item = hand.getType().toString().toLowerCase().replaceAll("_", " ");
+			String item = hand.getType().toString().toLowerCase().replace("_", " ");
 			Messenger.sendMessage(
 					player,
 					Messenger.getConfigMessage(Localizer.getLocale(player), "command.block.destroy." + slug, hit.getType().toString()
-							.toLowerCase().replaceAll("_", " ")
+							.toLowerCase().replace("_", " ")
 							+ (hit.getData() != (byte) 0 ? ":" + hit.getData() : ""), item == "air" ? "anything" : item));
 		}
 
@@ -178,7 +178,7 @@ public class BlockCommand implements CommandExecutor, TabCompleter {
 			Messenger.sendMessage(
 					player,
 					Messenger.getConfigMessage(Localizer.getLocale(player), "command.block.place." + slug, placed.getType().toString()
-							.toLowerCase().replaceAll("_", " ")
+							.toLowerCase().replace("_", " ")
 							+ (placed.getData() != (byte) 0 ? ":" + placed.getData() : "")));
 		}
 	}
