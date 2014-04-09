@@ -32,71 +32,72 @@ import org.bukkit.craftbukkit.v1_7_R1.util.UnsafeList;
  */
 public class CustomEntityGiantZombie extends EntityGiantZombie {
 
-	public CustomEntityGiantZombie(World world) {
-		super(world);
+    public CustomEntityGiantZombie(World world) {
+        super(world);
 
-		try {
-			PathingSupport.getField().set(goalSelector, new UnsafeList<PathfinderGoalSelector>());
-			PathingSupport.getField().set(targetSelector, new UnsafeList<PathfinderGoalSelector>());
-			PathingSupport.getSecondField().set(goalSelector, new UnsafeList<PathfinderGoalSelector>());
-			PathingSupport.getSecondField().set(targetSelector, new UnsafeList<PathfinderGoalSelector>());
-		} catch (Exception exc) {
-			exc.printStackTrace();
-		}
+        try {
+            PathingSupport.getField().set(goalSelector, new UnsafeList<PathfinderGoalSelector>());
+            PathingSupport.getField().set(targetSelector, new UnsafeList<PathfinderGoalSelector>());
+            PathingSupport.getSecondField().set(goalSelector, new UnsafeList<PathfinderGoalSelector>());
+            PathingSupport.getSecondField().set(targetSelector, new UnsafeList<PathfinderGoalSelector>());
+        } catch (Exception exc) {
+            exc.printStackTrace();
+        }
 
-		getNavigation().b(true);
-		goalSelector.a(0, new PathfinderGoalFloat(this));
-		goalSelector.a(2, new PathfinderGoalZombieAttack(this, EntityHuman.class, (Double) Configuration.getConfig("mobs.giant.speed"),
-				false));
-		goalSelector.a(3, new PathfinderGoalZombieAttack(this, EntityVillager.class, (Double) Configuration.getConfig("mobs.giant.speed"),
-				true));
-		goalSelector.a(4, new PathfinderGoalMoveTowardsRestriction(this, 1.0D));
-		goalSelector.a(5, new PathfinderGoalMoveThroughVillage(this, 1.0D, false));
-		goalSelector.a(6, new PathfinderGoalRandomStroll(this, 1.0D));
-		goalSelector.a(7, new PathfinderGoalLookAtTarget(this, EntityHuman.class, 8.0F));
-		goalSelector.a(7, new PathfinderGoalRandomLookaround(this));
-		targetSelector.a(1, new PathfinderGoalHurtByTarget(this, true));
-		goalSelector.a(1, new PathfinderGoalLeapAtTarget(this, 1.3F));
-		targetSelector.a(2, new PathfinderGoalNearestAttackableZombieTarget(this, EntityHuman.class, 0, true));
-		targetSelector.a(2, new PathfinderGoalNearestAttackableZombieTarget(this, EntityVillager.class, 0, false));
-	}
+        getNavigation().b(true);
+        goalSelector.a(0, new PathfinderGoalFloat(this));
+        goalSelector.a(2, new PathfinderGoalZombieAttack(this, EntityHuman.class, (Double) Configuration.getConfig("mobs.giant.speed"),
+                false));
+        goalSelector.a(3, new PathfinderGoalZombieAttack(this, EntityVillager.class, (Double) Configuration.getConfig("mobs.giant.speed"),
+                true));
+        goalSelector.a(4, new PathfinderGoalMoveTowardsRestriction(this, 1.0D));
+        goalSelector.a(5, new PathfinderGoalMoveThroughVillage(this, 1.0D, false));
+        goalSelector.a(6, new PathfinderGoalRandomStroll(this, 1.0D));
+        goalSelector.a(7, new PathfinderGoalLookAtTarget(this, EntityHuman.class, 8.0F));
+        goalSelector.a(7, new PathfinderGoalRandomLookaround(this));
+        targetSelector.a(1, new PathfinderGoalHurtByTarget(this, true));
+        goalSelector.a(1, new PathfinderGoalLeapAtTarget(this, 1.3F));
+        targetSelector.a(2, new PathfinderGoalNearestAttackableZombieTarget(this, EntityHuman.class, 0, true));
+        targetSelector.a(2, new PathfinderGoalNearestAttackableZombieTarget(this, EntityVillager.class, 0, false));
+    }
 
-	@Override
-	protected Entity findTarget() {
-		if (getGoalTarget() != null)
-			return getGoalTarget();
-		EntityHuman entityhuman = PathingSupport.findNearbyVulnerablePlayer(this);
+    @Override
+    protected Entity findTarget() {
+        if (getGoalTarget() != null)
+            return getGoalTarget();
+        EntityHuman entityhuman = PathingSupport.findNearbyVulnerablePlayer(this);
 
-		if (entityhuman != null && this.o(entityhuman)) {
-			setGoalTarget(entityhuman);
-			return entityhuman;
-		}
-		return null;
-	}
+        if (entityhuman != null && this.o(entityhuman)) {
+            setGoalTarget(entityhuman);
+            return entityhuman;
+        }
+        return null;
+    }
 
-	@Override
-	protected void aD() {
-		super.aD();
-		getAttributeInstance(GenericAttributes.e).setValue((Double) Configuration.getConfig("mobs.giant.damage"));
-	}
+    @Override
+    protected void aD() {
+        super.aD();
+        getAttributeInstance(GenericAttributes.e).setValue((Double) Configuration.getConfig("mobs.giant.damage"));
+    }
 
-	@Override
-	protected String t() {
-		return "mob.zombie.say";
-	}
+    @Override
+    protected String t() {
+        return "mob.zombie.say";
+    }
 
-	@Override
-	protected String aT() {
-		return "mob.zombie.hurt";
-	}
+    @Override
+    protected String aT() {
+        return "mob.zombie.hurt";
+    }
 
-	@Override
-	protected String aU() {
-		return "mob.zombie.death";
-	}
+    @Override
+    protected String aU() {
+        return "mob.zombie.death";
+    }
 
-	@Override
-	protected void a(int i, int j, int k, Block block) {
-		makeSound("mob.zombie.step", 0.15F, 1.0F);
-	}
+    @Override
+    protected void a(int i, int j, int k, Block block) {
+        super.a(i, j, k, block);
+        makeSound("mob.zombie.step", 0.15F, 1.0F);
+    }
 }

@@ -10,6 +10,7 @@ import java.util.UUID;
 import myz.MyZ;
 import myz.mobs.CustomEntityPlayer;
 import myz.support.PlayerData;
+import myz.support.SQLManager;
 import myz.support.interfacing.Configuration;
 import myz.support.interfacing.Localizer;
 import myz.support.interfacing.Messenger;
@@ -35,8 +36,11 @@ import org.bukkit.event.player.PlayerQuitEvent;
  */
 public class JoinQuit implements Listener {
 
-    @EventHandler(priority = EventPriority.HIGHEST)
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     private void onPreJoin(AsyncPlayerPreLoginEvent e) {
+
+        if(Bukkit.getOnlinePlayers().length > Bukkit.getMaxPlayers()) return;
+
         if ((Boolean) Configuration.getConfig(Configuration.PRELOGIN)) {
             UUID uid = MyZ.instance.getUID(e.getName());
             PlayerData data = PlayerData.getDataFor(uid);
@@ -122,8 +126,9 @@ public class JoinQuit implements Listener {
                 friends = data.getFriends();
             if (MyZ.instance.getSQLManager().isConnected())
                 stringFriends = MyZ.instance.getSQLManager().getStringList(player.getUniqueId(), "friends");
-            for (String s : stringFriends)
-                friends.add(UUID.fromString(s));
+            for (String s : stringFriends) {
+                friends.add(SQLManager.fromString(s));
+            }
             for (UUID friend : friends) {
                 Player online_friend = MyZ.instance.getPlayer(friend);
                 if (online_friend != null)
@@ -149,6 +154,25 @@ public class JoinQuit implements Listener {
                 @Override
                 public void run() {
                     player.teleport(floc);
+
+                    if (MyZ.instance.getSQLManager().isConnected()) {
+
+                        double health = MyZ.instance.getSQLManager().getDouble(player.getUniqueId(), "health");
+                        if(health > 0)
+                            player.setHealth(health);
+                        double hunger = MyZ.instance.getSQLManager().getDouble(player.getUniqueId(), "hunger");
+                        if(hunger > 0)
+                            player.setFoodLevel((int) hunger);
+                        double saturation = MyZ.instance.getSQLManager().getDouble(player.getUniqueId(), "saturation");
+                        if(saturation > 0)
+                            player.setSaturation((float) saturation);
+                        double exhaustion = MyZ.instance.getSQLManager().getDouble(player.getUniqueId(), "exhaustion");
+                        if(exhaustion > 0)
+                            player.setExhaustion((float) exhaustion);
+                        int level = MyZ.instance.getSQLManager().getInt(player.getUniqueId(), "level");
+                        if(level > 0)
+                            player.setLevel(level);
+                    }
                 }
             });
         }
@@ -179,8 +203,14 @@ public class JoinQuit implements Listener {
         if(!e.getPlayer().isDead()) {
             if(data != null)
                 data.setLocation(e.getPlayer().getLocation().getWorld().getName() + "," + e.getPlayer().getLocation().getX() + "," + e.getPlayer().getLocation().getY() + "," + e.getPlayer().getLocation().getZ() + "," + e.getPlayer().getLocation().getYaw() + "," + e.getPlayer().getLocation().getPitch());
-            if (MyZ.instance.getSQLManager().isConnected())
-                MyZ.instance.getSQLManager().set(e.getPlayer().getUniqueId(), "location", e.getPlayer().getLocation().getWorld().getName() + "," + e.getPlayer().getLocation().getX() + "," + e.getPlayer().getLocation().getY() + "," + e.getPlayer().getLocation().getZ() + "," + e.getPlayer().getLocation().getYaw() + "," + e.getPlayer().getLocation().getPitch(), false);
+            if (MyZ.instance.getSQLManager().isConnected()) {
+                MyZ.instance.getSQLManager().set(e.getPlayer().getUniqueId(), "location", e.getPlayer().getLocation().getWorld().getName() + "," + e.getPlayer().getLocation().getX() + "," + e.getPlayer().getLocation().getY() + "," + e.getPlayer().getLocation().getZ() + "," + e.getPlayer().getLocation().getYaw() + "," + e.getPlayer().getLocation().getPitch(), e.isAsynchronous());
+                MyZ.instance.getSQLManager().set(e.getPlayer().getUniqueId(), "health", e.getPlayer().getHealth(), e.isAsynchronous());
+                MyZ.instance.getSQLManager().set(e.getPlayer().getUniqueId(), "hunger", (double)e.getPlayer().getFoodLevel(), e.isAsynchronous());
+                MyZ.instance.getSQLManager().set(e.getPlayer().getUniqueId(), "saturation", (double)e.getPlayer().getSaturation(), e.isAsynchronous());
+                MyZ.instance.getSQLManager().set(e.getPlayer().getUniqueId(), "exhaustion", (double)e.getPlayer().getExhaustion(), e.isAsynchronous());
+                MyZ.instance.getSQLManager().set(e.getPlayer().getUniqueId(), "level", e.getPlayer().getLevel(), e.isAsynchronous());
+            }
         }
 
         if (MyZ.instance.getSQLManager().isConnected()) {

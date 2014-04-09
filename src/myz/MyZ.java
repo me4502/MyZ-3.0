@@ -20,8 +20,10 @@ import myz.api.PlayerWaterDecayEvent;
 import myz.chests.ChestManager;
 import myz.chests.ChestScanner;
 import myz.commands.AddResearchCommand;
+import myz.commands.AddResearchPointsCommand;
 import myz.commands.AddSpawnCommand;
 import myz.commands.AllowedCommand;
+import myz.commands.BaseCommand;
 import myz.commands.BlockCommand;
 import myz.commands.ChestGetCommand;
 import myz.commands.ChestScanCommand;
@@ -204,13 +206,14 @@ public class MyZ extends JavaPlugin {
         getCommand("research").setExecutor(new ResearchCommand());
         getCommand("setresearch").setExecutor(new AddResearchCommand());
         getCommand("stats").setExecutor(new StatsCommand());
-        getCommand("myz").setExecutor(new TranslateCommand());
+        getCommand("myz").setExecutor(new BaseCommand());
         getCommand("configure").setExecutor(new ItemConfigurationCommand());
         getCommand("chestscan").setExecutor(new ChestScanCommand());
         getCommand("chestset").setExecutor(new ChestSetCommand());
         getCommand("chestget").setExecutor(new ChestGetCommand());
         getCommand("lootset").setExecutor(new LootSetCommand());
         getCommand("mtranslate").setExecutor(new TranslateCommand());
+        getCommand("addresearchpoints").setExecutor(new AddResearchPointsCommand());
 
         /*
          * Register all listeners.
@@ -736,10 +739,10 @@ public class MyZ extends JavaPlugin {
      */
     public boolean isPoisoned(Player player) {
         PlayerData data = PlayerData.getDataFor(player);
-        if (data != null)
-            return data.isPoisoned();
         if (sql.isConnected())
             return sql.getBoolean(player.getUniqueId(), "isPoisoned");
+        if (data != null)
+            return data.isPoisoned();
         return false;
     }
 
@@ -1235,7 +1238,6 @@ public class MyZ extends JavaPlugin {
                         data.setZombie(true);
                     if (sql.isConnected())
                         sql.set(player.getUniqueId(), "isZombie", true, true);
-                    return;
                 }
 
             int rank = 0;

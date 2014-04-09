@@ -2,6 +2,7 @@ package myz.support;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -18,6 +19,7 @@ import myz.utilities.VaultUtils;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 
 public class SQLManager {
@@ -128,7 +130,7 @@ public class SQLManager {
         if (!isConnected())
             return;
         try {
-            executeQuery("CREATE TABLE IF NOT EXISTS playerdata (username VARCHAR(256) PRIMARY KEY, name TEXT, location TEXT, player_kills SMALLINT UNSIGNED NOT NULL DEFAULT 0, zombie_kills SMALLINT UNSIGNED NOT NULL DEFAULT 0, pigman_kills SMALLINT UNSIGNED NOT NULL DEFAULT 0, giant_kills SMALLINT UNSIGNED NOT NULL DEFAULT 0, player_kills_life SMALLINT UNSIGNED NOT NULL DEFAULT 0, zombie_kills_life SMALLINT UNSIGNED NOT NULL DEFAULT 0, pigman_kills_life SMALLINT UNSIGNED NOT NULL DEFAULT 0, giant_kills_life SMALLINT UNSIGNED NOT NULL DEFAULT 0, player_kills_life_record SMALLINT UNSIGNED NOT NULL DEFAULT 0, zombie_kills_life_record SMALLINT UNSIGNED NOT NULL DEFAULT 0, pigman_kills_life_record SMALLINT UNSIGNED NOT NULL DEFAULT 0, giant_kills_life_record SMALLINT UNSIGNED NOT NULL DEFAULT 0, deaths SMALLINT UNSIGNED NOT NULL DEFAULT 0, rank SMALLINT UNSIGNED NOT NULL DEFAULT 0, isBleeding TINYINT(1) NOT NULL DEFAULT 0, isPoisoned TINYINT(1) NOT NULL DEFAULT 0, wasNPCKilled TINYINT(1) NOT NULL DEFAULT 0, timeOfKickban BIGINT(20) NOT NULL DEFAULT 0, friends TEXT, heals_life SMALLINT UNSIGNED NOT NULL DEFAULT 0, thirst SMALLINT UNSIGNED NOT NULL DEFAULT 20, clan TEXT, minutes_alive BIGINT(20) UNSIGNED NOT NULL DEFAULT 0, minutes_alive_life INT UNSIGNED NOT NULL DEFAULT 0, minutes_alive_record INT UNSIGNED NOT NULL DEFAULT 0, research INT UNSIGNED NOT NULL DEFAULT 0, isZombie TINYINT(1) NOT NULL DEFAULT 0, legBroken TINYINT(1) NOT NULL DEFAULT 0)");
+            executeQuery("CREATE TABLE IF NOT EXISTS playerdata (username VARCHAR(256) PRIMARY KEY, name TEXT, location TEXT, player_kills SMALLINT UNSIGNED NOT NULL DEFAULT 0, zombie_kills SMALLINT UNSIGNED NOT NULL DEFAULT 0, pigman_kills SMALLINT UNSIGNED NOT NULL DEFAULT 0, giant_kills SMALLINT UNSIGNED NOT NULL DEFAULT 0, player_kills_life SMALLINT UNSIGNED NOT NULL DEFAULT 0, zombie_kills_life SMALLINT UNSIGNED NOT NULL DEFAULT 0, pigman_kills_life SMALLINT UNSIGNED NOT NULL DEFAULT 0, giant_kills_life SMALLINT UNSIGNED NOT NULL DEFAULT 0, player_kills_life_record SMALLINT UNSIGNED NOT NULL DEFAULT 0, zombie_kills_life_record SMALLINT UNSIGNED NOT NULL DEFAULT 0, pigman_kills_life_record SMALLINT UNSIGNED NOT NULL DEFAULT 0, giant_kills_life_record SMALLINT UNSIGNED NOT NULL DEFAULT 0, deaths SMALLINT UNSIGNED NOT NULL DEFAULT 0, rank SMALLINT UNSIGNED NOT NULL DEFAULT 0, isBleeding TINYINT(1) NOT NULL DEFAULT 0, isPoisoned TINYINT(1) NOT NULL DEFAULT 0, wasNPCKilled TINYINT(1) NOT NULL DEFAULT 0, timeOfKickban BIGINT(20) NOT NULL DEFAULT 0, friends TEXT, heals_life SMALLINT UNSIGNED NOT NULL DEFAULT 0, thirst SMALLINT UNSIGNED NOT NULL DEFAULT 20, clan VARCHAR(256), minutes_alive BIGINT(20) UNSIGNED NOT NULL DEFAULT 0, minutes_alive_life INT UNSIGNED NOT NULL DEFAULT 0, minutes_alive_record INT UNSIGNED NOT NULL DEFAULT 0, research INT UNSIGNED NOT NULL DEFAULT 0, isZombie TINYINT(1) NOT NULL DEFAULT 0, legBroken TINYINT(1) NOT NULL DEFAULT 0, health DOUBLE, hunger DOUBLE, saturation DOUBLE, exhaustion DOUBLE, level INT)");
             executeQuery("CREATE TABLE IF NOT EXISTS onlineplayers (username VARCHAR(256) PRIMARY KEY, online TINYINT, time BIGINT)");
             updateRanks();
         } catch (Exception e) {
@@ -138,9 +140,19 @@ public class SQLManager {
 
     public void updateRanks() {
         try {
-            if (MyZ.vault)
-                for (UUID uid : getKeys())
-                    VaultUtils.permission.playerAdd((String) null, MyZ.instance.getName(uid), "MyZ.rank." + getInt(uid, "rank"));
+            Bukkit.getScheduler().runTask(MyZ.instance, new Runnable() {
+
+                @Override
+                public void run() {
+                    if (MyZ.vault)
+                        for (UUID uid : getKeys()) {
+                            int rank = getInt(uid, "rank");
+                            if(rank > 0)
+                                VaultUtils.permission.playerAdd((String) null, MyZ.instance.getName(uid), "MyZ.rank." + rank);
+                        }
+                }
+
+            });
         } catch (Exception e) {
             Messenger.sendConsoleMessage(ChatColor.BLUE + "Unable to execute MySQL setup command. This may not be an error: "
                     + e.getMessage());
@@ -150,7 +162,7 @@ public class SQLManager {
     public boolean isPlayerOnline(String player) {
 
         try {
-            ResultSet query = query("SELECT * FROM onlineplayers WHERE username = '" + player + "' LIMIT 1");
+            ResultSet query = query("SELECT * FROM onlineplayers WHERE LOWER('username') = LOWER('" + player + "') LIMIT 1");
             if(!query.isBeforeFirst())
                 return false;
             query.next();
@@ -324,12 +336,17 @@ public class SQLManager {
      *            wasn't updated aSynchronously.
      */
     public void set(final UUID name, final String field, final Object value, boolean aSync, boolean forcingaSync) {
+
         if ("rank".equals(field)) {
             final Player p = MyZ.instance.getPlayer(name);
-            if (p != null && MyZ.vault) {
+            if (p != null && MyZ.vault && (Integer)value > 0) {
                 Bukkit.getScheduler().runTask(MyZ.instance, new Runnable() {
                     @Override
                     public void run() {
+                        if(value instanceof String)
+                            if(Integer.parseInt((String) value) <= 0) return;
+                        if(value instanceof Integer)
+                            if(((Integer) value).intValue() <= 0) return;
                         VaultUtils.permission.playerAdd((String) null, p.getName(), "MyZ.rank." + value);
                     }
                 });
@@ -356,7 +373,14 @@ public class SQLManager {
 
             if(nVal instanceof Boolean)
                 nVal = new Integer(((Boolean) nVal).booleanValue() == true ? 1 : 0);
-            executeQuery("UPDATE playerdata SET " + field + " = '" + nVal + "' WHERE username = '" + UUIDtoString(name) + "' LIMIT 1");
+
+            PreparedStatement statement = sql.prepareStatement("UPDATE playerdata SET " + field.replace("'", "").trim() + " = ? WHERE username = ?");
+            statement.setObject(1, nVal);
+            statement.setString(2, UUIDtoString(name));
+
+            statement.execute();
+
+            //executeQuery("UPDATE playerdata SET " + field + " = " + nVal + " WHERE username = '" + UUIDtoString(name) + "' LIMIT 1");
         } catch (Exception e) {
             Messenger.sendConsoleMessage(ChatColor.RED + "Unable to execute MySQL set command for " + UUIDtoString(name) + "." + field
                     + ": " + e.getMessage());
@@ -474,8 +498,8 @@ public class SQLManager {
         if ("rank".equals(field)) {
             int rank = 0;
             if (MyZ.vault) {
-                Player p = MyZ.instance.getPlayer(name);
-                if (p == null)
+                final Player p = MyZ.instance.getPlayer(name);
+                if (p == null || !p.isOnline())
                     return getint;
                 if (p.isOp())
                     return 100;
@@ -483,14 +507,49 @@ public class SQLManager {
                     if (p.hasPermission("MyZ.rank." + i))
                         rank = i;
                 if (rank < getint) {
-                    if (MyZ.vault)
-                        VaultUtils.permission.playerAdd((String) null, p.getName(), "MyZ.rank." + getint);
+                    if (MyZ.vault && getint > 0) {
+                        final int fint = getint;
+                        Bukkit.getScheduler().runTask(MyZ.instance, new Runnable() {
+                            @Override
+                            public void run() {
+                                VaultUtils.permission.playerAdd((World) null, p.getName(), "MyZ.rank." + fint);
+                            }
+                        });
+                    }
                     return getint;
                 } else if (rank > getint)
                     this.set(name, field, rank, true);
             } else
                 rank = getint;
             return rank;
+        }
+
+        return getint;
+    }
+
+    /**
+     * Get a piece of integer data out of the MySQL database.
+     * 
+     * @param name
+     *            The primary key
+     * @param field
+     *            The field
+     * @return The int received or 0 if nothing found
+     */
+    public double getDouble(UUID name, String field) {
+        double getint = 0;
+
+        if (getint == 0) {
+            try {
+                ResultSet rs = query("SELECT * FROM playerdata WHERE username = '" + UUIDtoString(name) + "' LIMIT 1");
+                if (rs.next())
+                    getint = rs.getDouble(field);
+            } catch (Exception e) {
+                Messenger.sendConsoleMessage(ChatColor.RED + "Unable to execute MySQL getint command for " + UUIDtoString(name) + "."
+                        + field + ": " + e.getMessage());
+                Messenger.sendConsoleMessage(ChatColor.RED + "Trying to reconnect");
+                connect();
+            }
         }
 
         return getint;
@@ -711,7 +770,7 @@ public class SQLManager {
 
         if(clan == null) clan = "";
 
-        return clan;
+        return clan.replace("'", "");
     }
 
     /**

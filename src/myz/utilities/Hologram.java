@@ -112,6 +112,13 @@ public class Hologram {
                     nmsPlayer.playerConnection.sendPacket(packedt);
                     nmsPlayer.playerConnection.sendPacket(pa);
                 }
+                Bukkit.getScheduler().runTaskLater(MyZ.instance, new Runnable() {
+                    @Override
+                    public void run() {
+                        if(skull != null && skull.isAlive())
+                            ((CraftWorld) loc.getWorld()).getHandle().removeEntity(skull);
+                    }
+                }, (Integer)Configuration.getConfig("hologram.showtime") * 20);
             }
         }, 0L);
 

@@ -475,7 +475,7 @@ public class PlayerData {
     public int getRank() {
         int rank = 0;
         if (MyZ.vault) {
-            Player p = MyZ.instance.getPlayer(uid);
+            final Player p = MyZ.instance.getPlayer(uid);
             if (p == null)
                 return this.rank;
             if (p.isOp())
@@ -484,8 +484,15 @@ public class PlayerData {
                 if (p.hasPermission("MyZ.rank." + i))
                     rank = i;
             if (rank < this.rank) {
-                if (MyZ.vault)
-                    VaultUtils.permission.playerAdd((String) null, p.getName(), "MyZ.rank." + this.rank);
+                if (MyZ.vault && this.rank > 0) {
+                    final int trank = this.rank;
+                    Bukkit.getScheduler().runTask(MyZ.instance, new Runnable() {
+                        @Override
+                        public void run() {
+                            VaultUtils.permission.playerAdd((String) null, p.getName(), "MyZ.rank." + trank);
+                        }
+                    });
+                }
                 return this.rank;
             } else if (rank > this.rank) {
                 this.rank = rank;
@@ -500,15 +507,21 @@ public class PlayerData {
      * @param rank
      *            the rank to set
      */
-    public boolean setRank(int rank) {
-        Player p = MyZ.instance.getPlayer(uid);
+    public boolean setRank(final int rank) {
+        final Player p = MyZ.instance.getPlayer(uid);
         if (p == null || !MyZ.vault) {
             this.rank = rank;
             save();
             return true;
         }
 
-        VaultUtils.permission.playerAdd((String) null, p.getName(), "MyZ.rank." + rank);
+        if(rank > 0)
+            Bukkit.getScheduler().runTask(MyZ.instance, new Runnable() {
+                @Override
+                public void run() {
+                    VaultUtils.permission.playerAdd((String) null, p.getName(), "MyZ.rank." + rank);
+                }
+            });
         return true;
     }
 

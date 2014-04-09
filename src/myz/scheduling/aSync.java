@@ -6,6 +6,7 @@ package myz.scheduling;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import myz.MyZ;
 import myz.api.PlayerDrinkWaterEvent;
@@ -34,164 +35,179 @@ import org.bukkit.potion.PotionEffectType;
  */
 public class aSync implements Runnable {
 
-	private static int ticks = 0;
-	private static final Random random = new Random();
-	private final boolean isDisguise;
+    private static int ticks = 0;
+    private static final Random random = new Random();
+    private final boolean isDisguise;
 
-	public aSync() {
-		isDisguise = MyZ.instance.getServer().getPluginManager().getPlugin("DisguiseCraft") != null
-				&& MyZ.instance.getServer().getPluginManager().getPlugin("DisguiseCraft").isEnabled();
-	}
+    public aSync() {
+        isDisguise = MyZ.instance.getServer().getPluginManager().getPlugin("DisguiseCraft") != null
+                && MyZ.instance.getServer().getPluginManager().getPlugin("DisguiseCraft").isEnabled();
+    }
 
-	@Override
-	public void run() {
-		ticks++;
+    @Override
+    public void run() {
+        ticks++;
 
-		for (String world : (List<String>) Configuration.getConfig(Configuration.WORLDS)) {
-			if (Bukkit.getWorld(world) == null) {
-				Messenger.sendConsoleMessage("&4Specified world (" + world + ") does not exist! Please update your config.yml");
-				continue;
-			}
-			for (final Player player : getSyncPlayers(world)) {
-				if (player.getGameMode() == GameMode.CREATIVE || Configuration.isInLobby(player))
-					continue;
+        for (String world : (List<String>) Configuration.getConfig(Configuration.WORLDS)) {
+            if (Bukkit.getWorld(world) == null) {
+                Messenger.sendConsoleMessage("&4Specified world (" + world + ") does not exist! Please update your config.yml");
+                continue;
+            }
+            for (final Player player : getSyncPlayers(world)) {
+                if (player.getGameMode() == GameMode.CREATIVE || Configuration.isInLobby(player))
+                    continue;
 
-				// Increment minutes alive.
-				if (ticks % 60 == 0) {
-					PlayerData data = PlayerData.getDataFor(player);
-					int amount;
-					if (data != null) {
-						data.setMinutesAlive(data.getMinutesAlive() + 1);
-						data.setMinutesAliveLife(amount = data.getMinutesAliveLife() + 1);
-						if (amount > data.getMinutesAliveLifeRecord())
-							data.setMinutesAliveLifeRecord(amount);
-					}
-					if (MyZ.instance.getSQLManager().isConnected()) {
-						MyZ.instance.getSQLManager().set(player.getUniqueId(), "minutes_alive",
-								MyZ.instance.getSQLManager().getLong(player.getUniqueId(), "minutes_alive") + 1, true);
-						MyZ.instance.getSQLManager().set(player.getUniqueId(), "minutes_alive_life",
-								amount = MyZ.instance.getSQLManager().getInt(player.getUniqueId(), "minutes_alive_life") + 1, true);
-						if (amount > MyZ.instance.getSQLManager().getInt(player.getUniqueId(), "minutes_alive_record"))
-							MyZ.instance.getSQLManager().set(player.getUniqueId(), "minutes_alive_record", amount, true);
-					}
-				}
+                // Increment minutes alive.
+                if (ticks % 60 == 0) {
+                    PlayerData data = PlayerData.getDataFor(player);
+                    int amount;
+                    if (data != null) {
+                        data.setMinutesAlive(data.getMinutesAlive() + 1);
+                        data.setMinutesAliveLife(amount = data.getMinutesAliveLife() + 1);
+                        if (amount > data.getMinutesAliveLifeRecord())
+                            data.setMinutesAliveLifeRecord(amount);
+                    }
+                    if (MyZ.instance.getSQLManager().isConnected()) {
+                        MyZ.instance.getSQLManager().set(player.getUniqueId(), "minutes_alive",
+                                MyZ.instance.getSQLManager().getLong(player.getUniqueId(), "minutes_alive") + 1, true);
+                        MyZ.instance.getSQLManager().set(player.getUniqueId(), "minutes_alive_life",
+                                amount = MyZ.instance.getSQLManager().getInt(player.getUniqueId(), "minutes_alive_life") + 1, true);
+                        if (amount > MyZ.instance.getSQLManager().getInt(player.getUniqueId(), "minutes_alive_record"))
+                            MyZ.instance.getSQLManager().set(player.getUniqueId(), "minutes_alive_record", amount, true);
+                    }
+                }
 
-				if (isDisguise)
-					if (myz.utilities.DisguiseUtils.isZombie(player))
-						continue;
+                if (isDisguise)
+                    if (myz.utilities.DisguiseUtils.isZombie(player))
+                        continue;
 
-				player.setExp((float) PathingSupport.experienceBarVisibility(player) / 18);
+                player.setExp((float) PathingSupport.experienceBarVisibility(player) / 18);
 
-				MyZ.instance.getServer().getScheduler().runTask(MyZ.instance, new Runnable() {
-					public void run() {
-						// Increase thirst level by swimming or by standing in
-						// the rain.
-						boolean isRaining = false;
-						Object nmsplayer = NMSUtils.castToNMS(player);
-						if (nmsplayer != null)
-							try {
-								isRaining = (Boolean) nmsplayer
-										.getClass()
-										.getMethod("isRainingAt", int.class, int.class, int.class)
-										.invoke(nmsplayer, player.getLocation().getBlockX(), player.getLocation().getBlockY(),
-												player.getLocation().getBlockZ());
-							} catch (Exception exc) {
-							}
-						syncLiquidCheck(player, isRaining);
-					}
-				});
+                MyZ.instance.getServer().getScheduler().runTask(MyZ.instance, new Runnable() {
+                    @Override
+                    public void run() {
+                        // Increase thirst level by swimming or by standing in
+                        // the rain.
+                        boolean isRaining = false;
+                        Object nmsplayer = NMSUtils.castToNMS(player);
+                        if (nmsplayer != null)
+                            try {
+                                isRaining = (Boolean) nmsplayer
+                                        .getClass()
+                                        .getMethod("isRainingAt", int.class, int.class, int.class)
+                                        .invoke(nmsplayer, player.getLocation().getBlockX(), player.getLocation().getBlockY(),
+                                                player.getLocation().getBlockZ());
+                            } catch (Exception exc) {
+                            }
+                        syncLiquidCheck(player, isRaining);
+                    }
+                });
 
-				// Take bleeding damage.
-				if (ticks % (Integer) Configuration.getConfig("damage.bleed_damage_frequency") == 0 && MyZ.instance.isBleeding(player)
-						&& player.getHealth() > (Integer) Configuration.getConfig("damage.bleed_damage")) {
-					PlayerTakeBleedingDamageEvent event = new PlayerTakeBleedingDamageEvent(player);
-					if (!event.isCancelled()) {
-						player.damage((Integer) Configuration.getConfig("damage.bleed_damage"));
-						player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 1, 20));
-						Messenger.sendConfigMessage(player, "damage.bleed_begin");
-					}
-				}
+                // Take bleeding damage.
+                if (ticks % (Integer) Configuration.getConfig("damage.bleed_damage_frequency") == 0 && MyZ.instance.isBleeding(player)
+                        && player.getHealth() > (Integer) Configuration.getConfig("damage.bleed_damage")) {
+                    PlayerTakeBleedingDamageEvent event = new PlayerTakeBleedingDamageEvent(player);
+                    if (!event.isCancelled()) {
+                        player.damage((Integer) Configuration.getConfig("damage.bleed_damage"));
+                        player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 1, 20));
+                        Messenger.sendConfigMessage(player, "damage.bleed_begin");
+                    }
+                }
 
-				// Take poison damage.
-				if ((ticks + 11) % (Integer) Configuration.getConfig("damage.poison_damage_frequency") == 0
-						&& MyZ.instance.isPoisoned(player)
-						&& player.getHealth() > (Integer) Configuration.getConfig("damage.poison_damage")) {
-					PlayerTakePoisonDamageEvent event = new PlayerTakePoisonDamageEvent(player);
-					if (!event.isCancelled()) {
-						player.damage((Integer) Configuration.getConfig("damage.poison_damage"));
-						player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 1, 20));
-						player.addPotionEffect(new PotionEffect(PotionEffectType.CONFUSION, 2, 80));
-						Messenger.sendConfigMessage(player, "damage.poison_begin");
-					}
-				}
+                // Take poison damage.
+                if ((ticks + 11) % (Integer) Configuration.getConfig("damage.poison_damage_frequency") == 0
+                        && MyZ.instance.isPoisoned(player)
+                        && player.getHealth() > (Integer) Configuration.getConfig("damage.poison_damage")) {
+                    PlayerTakePoisonDamageEvent event = new PlayerTakePoisonDamageEvent(player);
+                    if (!event.isCancelled()) {
+                        player.damage((Integer) Configuration.getConfig("damage.poison_damage"));
+                        player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 1, 20));
+                        player.addPotionEffect(new PotionEffect(PotionEffectType.CONFUSION, 2, 80));
+                        Messenger.sendConfigMessage(player, "damage.poison_begin");
+                    }
+                }
 
-				// Take thirst decay and damage.
-				if ((ticks + 22) % (Integer) Configuration.getConfig(Configuration.THIRST_DECAY) == 0)
-					if (player.getLevel() > 0)
-						MyZ.instance.setThirst(player, player.getLevel() - 1);
-					else if (player.getHealth() > (Integer) Configuration.getConfig("damage.water_damage")) {
-						PlayerTakeWaterDamageEvent event = new PlayerTakeWaterDamageEvent(player);
-						if (!event.isCancelled())
-							player.damage((Integer) Configuration.getConfig("damage.water_damage"));
-					}
-			}
+                // Take thirst decay and damage.
+                if ((ticks + 22) % (Integer) Configuration.getConfig(Configuration.THIRST_DECAY) == 0)
+                    if (player.getLevel() > 0)
+                        MyZ.instance.setThirst(player, player.getLevel() - 1);
+                    else if (player.getHealth() > (Integer) Configuration.getConfig("damage.water_damage")) {
+                        PlayerTakeWaterDamageEvent event = new PlayerTakeWaterDamageEvent(player);
+                        if (!event.isCancelled())
+                            player.damage((Integer) Configuration.getConfig("damage.water_damage"));
+                    }
+            }
 
-			// Ensure we don't exceed the integer size.
-			if (ticks >= Integer.MAX_VALUE)
-				ticks = 0;
-		}
-	}
+            // Ensure we don't exceed the integer size.
+            if (ticks >= Integer.MAX_VALUE)
+                ticks = 0;
+        }
+    }
 
-	/**
-	 * Get a list of online players synchronously.
-	 * 
-	 * @param world
-	 *            The name of the world to get players in.
-	 * @return The list of players.
-	 */
-	private List<Player> getSyncPlayers(final String world) {
-		return MyZ.instance.getServer().getWorld(world).getPlayers();
-	}
+    /**
+     * Get a list of online players synchronously.
+     * 
+     * @param world
+     *            The name of the world to get players in.
+     * @return The list of players.
+     */
+    private List<Player> getSyncPlayers(final String world) {
 
-	/**
-	 * Force a sync check of the location surrounding the player to see if it's
-	 * liquidy around them.
-	 * 
-	 * @param player
-	 *            The player.
-	 * @param isRaining
-	 *            Whether or not it's raining where they are.
-	 */
-	private void syncLiquidCheck(final Player player, final boolean isRaining) {
-		// MyZ.instance.getServer().getScheduler().runTask(MyZ.instance, new
-		// Runnable() {
-		// public void run() {
-		if (player.getLevel() < (Integer) Configuration.getConfig(Configuration.THIRST_MAX)
-				&& (player.getLocation().getBlock().getRelative(BlockFace.UP).isLiquid() || isRaining
-						&& noBlocksAbove(player.getLocation())))
-			if (ticks % (random.nextInt(2) + 1) == 0) {
-				PlayerDrinkWaterEvent event = new PlayerDrinkWaterEvent(player);
-				if (!event.isCancelled())
-					MyZ.instance.setThirst(player, player.getLevel() + 1);
-			}
-		// }
-		// });
-	}
+        final List<Player> players = new ArrayList<Player>();
+        final AtomicBoolean hasDone = new AtomicBoolean(false);
 
-	/**
-	 * Check if there are any blocks above the specified location. Searches from
-	 * this location's y to max build height.
-	 * 
-	 * @param loc
-	 *            The location.
-	 * @return False if there are any blocks above the given location.
-	 */
-	private boolean noBlocksAbove(Location loc) {
-		for (int y = loc.getBlockY(); y < loc.getBlockY() + 30; y++) {
-			Block b;
-			if ((b = loc.getWorld().getBlockAt(loc.getBlockX(), y, loc.getBlockZ())) != null && b.getType() != Material.AIR)
-				return false;
-		}
-		return true;
-	}
+        Bukkit.getScheduler().runTask(MyZ.instance, new Runnable() {
+            @Override
+            public void run() {
+                players.addAll(MyZ.instance.getServer().getWorld(world).getPlayers());
+                hasDone.set(true);
+            }
+        });
+
+        while(!hasDone.get()) {}
+
+        return players;
+    }
+
+    /**
+     * Force a sync check of the location surrounding the player to see if it's
+     * liquidy around them.
+     * 
+     * @param player
+     *            The player.
+     * @param isRaining
+     *            Whether or not it's raining where they are.
+     */
+    private void syncLiquidCheck(final Player player, final boolean isRaining) {
+        // MyZ.instance.getServer().getScheduler().runTask(MyZ.instance, new
+        // Runnable() {
+        // public void run() {
+        if (player.getLevel() < (Integer) Configuration.getConfig(Configuration.THIRST_MAX)
+                && (player.getLocation().getBlock().getRelative(BlockFace.UP).isLiquid() || isRaining
+                        && noBlocksAbove(player.getLocation())))
+            if (ticks % (random.nextInt(2) + 1) == 0) {
+                PlayerDrinkWaterEvent event = new PlayerDrinkWaterEvent(player);
+                if (!event.isCancelled())
+                    MyZ.instance.setThirst(player, player.getLevel() + 1);
+            }
+        // }
+        // });
+    }
+
+    /**
+     * Check if there are any blocks above the specified location. Searches from
+     * this location's y to max build height.
+     * 
+     * @param loc
+     *            The location.
+     * @return False if there are any blocks above the given location.
+     */
+    private boolean noBlocksAbove(Location loc) {
+        for (int y = loc.getBlockY(); y < loc.getBlockY() + 30; y++) {
+            Block b;
+            if ((b = loc.getWorld().getBlockAt(loc.getBlockX(), y, loc.getBlockZ())) != null && b.getType() != Material.AIR)
+                return false;
+        }
+        return true;
+    }
 }

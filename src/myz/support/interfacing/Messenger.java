@@ -48,7 +48,8 @@ public class Messenger {
             return "";
         PlayerData data = PlayerData.getDataFor(player);
         if (data != null) {
-            msg = msg.replace("%CLAN%", data.getClan());
+            if(data.getClan() != null)
+                msg = msg.replace("%CLAN%", data.getClan());
             msg = msg.replace("%RANK%", "" + data.getRank());
             msg = msg.replace("%RESEARCH%", "" + data.getResearchPoints());
         }
@@ -99,9 +100,7 @@ public class Messenger {
         ItemStack tH = typeFor.getItemInHand();
 
         for (Player player : playerFor.getWorld().getPlayers())
-            new FancyMessage(Configuration.getPrefixForPlayerRank(playerFor)).itemTooltip(pH)
-            .then(" " + Messenger.getConfigMessage(Localizer.getLocale(player), "murdered") + " ")
-            .then(Configuration.getPrefixForPlayerRank(typeFor)).itemTooltip(tH);
+            new FancyMessage(Configuration.getPrefixForPlayerRank(playerFor)).itemTooltip(pH).then(" " + Messenger.getConfigMessage(Localizer.getLocale(player), "murdered") + " ").then(Configuration.getPrefixForPlayerRank(typeFor)).itemTooltip(tH);
     }
 
     /**
